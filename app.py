@@ -68,7 +68,14 @@ def extract_text_unstructured(uploaded_files):
         with open(file.name, "wb") as f:
             f.write(file.getbuffer())
 
-        elements = partition(filename=file.name)
+            elements = partition(
+            filename=file.name,
+            strategy="fast"
+            )
+
+
+
+
 
         file_text = "\n".join(
             el.text for el in elements if el.text
