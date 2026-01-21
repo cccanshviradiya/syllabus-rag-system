@@ -27,9 +27,15 @@ huggingface-hub
 faiss-cpu
 
 # ------------------------
-# PDF & OCR
+# Document Processing (IMPORTANT)
+# ------------------------
+unstructured[pdf]
+
+# ------------------------
+# PDF & OCR (Optional but used in your code)
 # ------------------------
 PyPDF2
 pytesseract
 pdf2image
 Pillow
+
