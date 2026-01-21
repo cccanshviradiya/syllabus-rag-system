@@ -32,6 +32,12 @@ pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 )
 
+def split_questions(text):
+    text = text.replace("\n", " ").strip()
+    questions = re.split(r'(?<=[?.])\s+', text)
+    return [q.strip() for q in questions if q.strip()]
+
+
 
 # ==================== PROMPT ====================
 PROMPT = PromptTemplate(
@@ -131,13 +137,13 @@ def ask_llm_with_fallback(context, question):
     except Exception:
         st.warning(" Gemini failed. Falling back to local Phi-3.")
         return ask_phi3(context, question)
+
+def clear_cache():
+    st.cache_resource.clear()
+    st.cache_data.clear()
+
   
 
-
-
-
-
-# ==================== USER QUERY ====================
 def user_input(user_question):
     if not os.path.exists("faiss_index"):
         st.warning("Please upload and process PDFs first.")
@@ -166,12 +172,6 @@ def user_input(user_question):
 
     st.write("### Reply:")
     st.write(answer)
-
-    
-
-  
-
-
 
 # ==================== STREAMLIT UI ====================
 def main():
