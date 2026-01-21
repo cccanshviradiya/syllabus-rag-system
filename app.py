@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from PyPDF2 import PdfReader
+
 
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -51,33 +51,6 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question"]
 )
 
-
-# # ==================== OCR ====================
-# def extract_text_with_ocr(pdf_file):
-#     images = convert_from_path(pdf_file)
-#     text = ""
-#     for img in images:
-#         text += pytesseract.image_to_string(img)
-#     return text
-
-
-# # ==================== PDF TEXT ====================
-# def get_pdf_text(pdf_docs):
-#     text = ""
-
-#     for pdf in pdf_docs:
-#         reader = PdfReader(pdf)
-#         for page in reader.pages:
-#             page_text = page.extract_text()
-#             if page_text:
-#                 text += page_text
-
-#     if len(text.strip()) < 50:
-#         st.info("🔍 Scanned PDF detected — using OCR")
-#         for pdf in pdf_docs:
-#             text += extract_text_with_ocr(pdf)
-
-#     return text
 
 def extract_text_unstructured(uploaded_files):
     full_text = ""
