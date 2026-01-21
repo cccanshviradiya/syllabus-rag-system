@@ -138,6 +138,7 @@ def ask_llm_with_fallback(context, question):
         st.warning(" Gemini failed. Falling back to local Phi-3.")
         return ask_phi3(context, question)
 
+
 def clear_cache():
     st.cache_resource.clear()
     st.cache_data.clear()
@@ -201,6 +202,11 @@ def main():
                 chunks = get_text_chunks(raw_text)
                 get_vector_store(chunks)
                 st.success(" Files processed successfully!")
+
+        if st.button(" Clear Cache"):
+            clear_cache()
+            st.success("Cache cleared successfully!")
+
 
 if __name__ == "__main__":
     main()
