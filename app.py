@@ -15,6 +15,8 @@ import pytesseract
 from pdf2image import convert_from_path
 
 from dotenv import load_dotenv
+import unstructured
+from unstructured.partition.auto import partition
 
 load_dotenv()  
 
@@ -50,32 +52,53 @@ PROMPT = PromptTemplate(
 )
 
 
-# ==================== OCR ====================
-def extract_text_with_ocr(pdf_file):
-    images = convert_from_path(pdf_file)
-    text = ""
-    for img in images:
-        text += pytesseract.image_to_string(img)
-    return text
+# # ==================== OCR ====================
+# def extract_text_with_ocr(pdf_file):
+#     images = convert_from_path(pdf_file)
+#     text = ""
+#     for img in images:
+#         text += pytesseract.image_to_string(img)
+#     return text
 
 
-# ==================== PDF TEXT ====================
-def get_pdf_text(pdf_docs):
-    text = ""
+# # ==================== PDF TEXT ====================
+# def get_pdf_text(pdf_docs):
+#     text = ""
 
-    for pdf in pdf_docs:
-        reader = PdfReader(pdf)
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text
+#     for pdf in pdf_docs:
+#         reader = PdfReader(pdf)
+#         for page in reader.pages:
+#             page_text = page.extract_text()
+#             if page_text:
+#                 text += page_text
 
-    if len(text.strip()) < 50:
-        st.info("🔍 Scanned PDF detected — using OCR")
-        for pdf in pdf_docs:
-            text += extract_text_with_ocr(pdf)
+#     if len(text.strip()) < 50:
+#         st.info("🔍 Scanned PDF detected — using OCR")
+#         for pdf in pdf_docs:
+#             text += extract_text_with_ocr(pdf)
 
-    return text
+#     return text
+
+def extract_text_unstructured(uploaded_files):
+    full_text = ""
+
+    for file in uploaded_files:
+        with open(file.name, "wb") as f:
+            f.write(file.getbuffer())
+
+        elements = partition(filename=file.name)
+
+        file_text = "\n".join(
+            el.text for el in elements if el.text
+        )
+
+        full_text += f"\n\n--- Source: {file.name} ---\n\n"
+        full_text += file_text
+
+        os.remove(file.name)
+
+    return full_text
+
 
 
 # ==================== CHUNKING ====================
@@ -102,7 +125,7 @@ def get_vector_store(text_chunks):
     db.save_local("faiss_index")
 
 
-# ==================== GEMINI (PRIMARY) ====================
+
 def ask_gemini(context, question):
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
@@ -113,8 +136,6 @@ def ask_gemini(context, question):
     )
     return response.content
 
-
-# ==================== PHI-3 (FALLBACK) ====================
 def ask_phi3(context, question):
     llm = ChatOllama(
         model="phi3",
@@ -150,7 +171,7 @@ def user_input(user_question):
         allow_dangerous_deserialization=True
     )
 
-    docs = db.similarity_search(user_question, k=2)
+    docs = db.similarity_search(user_question, k=3)
 
     if not docs:
         st.write("Answer is not available in the context.")
@@ -179,6 +200,7 @@ def main():
         st.title("Menu")
         pdf_docs = st.file_uploader(
             "Upload PDF files",
+            type=["pdf", "txt", "md", "docx", "html"],
             accept_multiple_files=True
         )
 
@@ -187,13 +209,13 @@ def main():
                 st.warning("Please upload at least one PDF.")
                 return
 
-            with st.spinner("Processing PDFs..."):
-                raw_text = get_pdf_text(pdf_docs)
+            with st.spinner("Processing Files..."):
+                raw_text = extract_text_unstructured(pdf_docs)
                 chunks = get_text_chunks(raw_text)
                 get_vector_store(chunks)
-                st.success(" PDFs processed successfully!")
-
+                st.success(" Files processed successfully!")
 
 if __name__ == "__main__":
     main()
+
 
