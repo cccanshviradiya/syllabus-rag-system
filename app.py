@@ -19,7 +19,11 @@ from dotenv import load_dotenv
 import unstructured
 from unstructured.partition.auto import partition
 
-load_dotenv()  
+load_dotenv() 
+
+
+os.environ["UNSTRUCTURED_DISABLE_INFERENCE"] = "true"
+
 
 
 
@@ -27,10 +31,11 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
-# ==================== OCR CONFIG ====================
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+if os.name == "nt":  # Only on Windows (local)
+    pytesseract.pytesseract.tesseract_cmd = (
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
+
 
 def split_questions(text):
     text = text.replace("\n", " ").strip()
@@ -68,25 +73,18 @@ def extract_text_unstructured(uploaded_files):
         with open(file.name, "wb") as f:
             f.write(file.getbuffer())
 
-            elements = partition(
+        elements = partition(
             filename=file.name,
-            strategy="fast"
-            )
-
-
-
-
-
-        file_text = "\n".join(
-            el.text for el in elements if el.text
+            strategy="fast"   # 🚨 REQUIRED
         )
 
-        full_text += f"\n\n--- Source: {file.name} ---\n\n"
-        full_text += file_text
+        file_text = "\n".join(el.text for el in elements if el.text)
+        full_text += f"\n\n--- Source: {file.name} ---\n\n{file_text}"
 
         os.remove(file.name)
 
     return full_text
+
 
 
 
