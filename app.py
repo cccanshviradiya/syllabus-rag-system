@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import re
 
 
 import google.generativeai as genai
@@ -50,6 +51,8 @@ PROMPT = PromptTemplate(
     """,
     input_variables=["context", "question"]
 )
+
+
 
 
 def extract_text_unstructured(uploaded_files):
@@ -128,6 +131,10 @@ def ask_llm_with_fallback(context, question):
     except Exception:
         st.warning(" Gemini failed. Falling back to local Phi-3.")
         return ask_phi3(context, question)
+  
+
+
+
 
 
 # ==================== USER QUERY ====================
@@ -144,6 +151,8 @@ def user_input(user_question):
         allow_dangerous_deserialization=True
     )
 
+    questions = split_questions(user_question)
+
     docs = db.similarity_search(user_question, k=3)
 
     if not docs:
@@ -157,6 +166,11 @@ def user_input(user_question):
 
     st.write("### Reply:")
     st.write(answer)
+
+    
+
+  
+
 
 
 # ==================== STREAMLIT UI ====================
